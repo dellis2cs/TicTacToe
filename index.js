@@ -1,6 +1,12 @@
 const header = document.querySelector(".header");
 const reset = document.querySelector(".reset");
+const start = document.querySelector(".start");
+const player1Input = document.querySelector("#player1");
+const player2Input = document.querySelector("#player2");
+const player1Label = document.querySelector(".label1");
+const player2Label = document.querySelector(".label2");
 
+const boardContainerVisibility = document.querySelector(".board");
 reset.addEventListener("click", function () {
   location.reload();
 });
@@ -30,8 +36,12 @@ const gameController = (function () {
   //Player 1
   const player1 = "X";
 
+  let player1Name;
+
   //Player 2
   const player2 = "O";
+
+  let player2Name;
 
   const board = gameBoard.getBoard();
 
@@ -39,16 +49,20 @@ const gameController = (function () {
 
   //Current Player(defaults to player1)
   let currentPlayer = player1;
+  let currentPLayerName = player1Name;
 
   //fetches the current player
   const getCurrPlayer = () => currentPlayer;
+  const getCurrPlayerName = () => currentPLayerName;
 
   //after each round switch to the other player
   const switchPlayer = () => {
     if (currentPlayer === player1) {
       currentPlayer = player2;
+      currentPLayerName = player2Name;
     } else {
       currentPlayer = player1;
+      currentPLayerName = player1Name;
     }
   };
 
@@ -74,23 +88,33 @@ const gameController = (function () {
 
   function mainDiagonalEqual() {
     const mainDiagonalValue = board[0][0];
-    return (
-      board[1][1] === mainDiagonalValue && board[2][2] === mainDiagonalValue
-    );
+    if (board[0][0] != "" && board[1][1] != "" && board[2][2] != "") {
+      return (
+        board[1][1] === mainDiagonalValue && board[2][2] === mainDiagonalValue
+      );
+    }
   }
   function antiDiagonalEqual() {
-    const antiDiagonalValue = board[0][2];
-    return (
-      board[1][1] === antiDiagonalValue && board[2][0] === antiDiagonalValue
-    );
+    if (board[0][2] != "" && board[1][1] != "" && board[2][0] != "") {
+      const antiDiagonalValue = board[0][2];
+      return (
+        board[1][1] === antiDiagonalValue && board[2][0] === antiDiagonalValue
+      );
+    }
   }
 
   //if any row is the same or any column is the same return true
   const checkBoard = (row, col) => {
-    if (isRowEqual(board, row) || isColEqual(board, col)) {
+    if (
+      isRowEqual(board, row) ||
+      isColEqual(board, col) ||
+      mainDiagonalEqual() ||
+      antiDiagonalEqual()
+    ) {
       return true;
     }
     numRounds++;
+    //num rounds updates by 2 because we need to check whether the col or rows are equal
     if (numRounds == 18) {
       return "draw";
     }
@@ -101,7 +125,15 @@ const gameController = (function () {
     board[row][col] = currentPlayer;
   };
 
-  return { getCurrPlayer, switchPlayer, checkBoard, updateBoard };
+  return {
+    getCurrPlayer,
+    switchPlayer,
+    checkBoard,
+    updateBoard,
+    getCurrPlayerName,
+    player1Name,
+    player2Name,
+  };
 })();
 
 //handles the ui updates
@@ -156,15 +188,17 @@ const DisplayController = (function () {
           ) === true
         ) {
           if (gameController.getCurrPlayer() === "X") {
-            header.textContent = "player 1 wins!";
+            header.textContent = `${gameController.player1Name} wins!`;
             cells.forEach((cell) => {
               cell.replaceWith(cell.cloneNode(true)); // This removes all event listeners by replacing each cell with a clone of itself
             });
+            reset.style.visibility = "visible";
           } else {
-            header.textContent = "player 2 wins!";
+            header.textContent = `${gameController.player2Name} wins!`;
             cells.forEach((cell) => {
               cell.replaceWith(cell.cloneNode(true)); // This removes all event listeners by replacing each cell with a clone of itself
             });
+            reset.style.visibility = "visible";
           }
         } else if (
           gameController.checkBoard(
@@ -173,9 +207,23 @@ const DisplayController = (function () {
           ) == "draw"
         ) {
           header.textContent = "draw! no one wins!";
+          reset.style.visibility = "visible";
         }
         gameController.switchPlayer();
       }
     });
   });
 })();
+
+start.addEventListener("click", function () {
+  if (player1Input.value != "" && player2Input.value != "") {
+    boardContainerVisibility.style.visibility = "visible";
+    start.style.visibility = "hidden";
+    gameController.player1Name = player1Input.value;
+    gameController.player2Name = player2Input.value;
+    player1Input.style.visibility = "hidden";
+    player2Input.style.visibility = "hidden";
+    player1Label.style.visibility = "hidden";
+    player2Label.style.visibility = "hidden";
+  }
+});
